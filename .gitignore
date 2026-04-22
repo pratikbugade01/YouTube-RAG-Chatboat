@@ -1,0 +1,10 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environment files
+.env
+project/.env
+
+# Notebook checkpoints
+.ipynb_checkpoints/
