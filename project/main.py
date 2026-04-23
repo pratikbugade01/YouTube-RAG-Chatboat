@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from main import load_transcript, answer
+from rag import load_transcript, answer
 
 app = FastAPI()
 
@@ -30,7 +30,7 @@ def health_check():
 def load_video(request: VideoRequest):
     global chain
     chain = load_transcript(request.video_id,request.language)  # ← your function
-
+    print(chain)
     if chain is None:
         return {"success": False, "message": "Could not fetch transcript."}
 
