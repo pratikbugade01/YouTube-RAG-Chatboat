@@ -13,13 +13,17 @@ st.write("Ask questions from any YouTube video transcript")
 # Load Video Section
 # -------------------------
 video_id = st.text_input("Enter YouTube Video ID")
+language = st.text_input("Enter Language Code (e.g., en, hi, mr)")
 
 if st.button("Load Video"):
     if video_id:
         with st.spinner("Loading transcript..."):
             response = requests.post(
                 f"{BASE_URL}/load_video",
-                json={"video_id": video_id}
+                json={
+                    "video_id": video_id,
+                    "language": language   # 👈 added
+                }
             )
 
             data = response.json()
