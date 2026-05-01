@@ -1,0 +1,208 @@
+# YouTube RAG Chatbot Backend
+
+FastAPI backend for a YouTube retrieval-augmented generation (RAG) chatbot. The service fetches YouTube transcripts, splits them into chunks, builds a FAISS vector store with Hugging Face embeddings, and answers questions with Groq-hosted LLMs.
+
+This repository is focused on the backend API. The Streamlit frontend in `frontend.py` can be used locally, but the Docker setup is configured for the FastAPI service.
+
+## Features
+
+- Fetches transcripts from YouTube videos by video ID and language code.
+- Splits transcript text into searchable chunks.
+- Uses FAISS for vector retrieval.
+- Uses `langchain-groq` for LLM-powered answers.
+- Exposes simple REST endpoints for loading a video and asking questions.
+- Docker-ready for deployment on Hugging Face Spaces or any container platform.
+
+## Project Structure
+
+```text
+GenAI-Project-
+├── frontend.py
+├── GenAi_project.ipynb
+├── readme
+└── Backend/
+    ├── Dockerfile
+    ├── main.py
+    ├── rag.py
+    ├── requirement.txt
+    └── .env
+```
+
+## How It Works
+
+1. The client calls `POST /load_video` with a `video_id` and `language`.
+2. The backend downloads the transcript using `youtube-transcript-api`.
+3. The transcript is chunked and stored in a FAISS retriever.
+4. The client calls `POST /ask` with a question.
+5. The backend retrieves relevant context and sends it to the Groq LLM.
+
+## Tech Stack
+
+- FastAPI
+- Uvicorn
+- Pydantic
+- LangChain
+- FAISS
+- Sentence Transformers
+- YouTube Transcript API
+- Groq API
+
+## Prerequisites
+
+- Python 3.11+
+- A valid `GROQ_API_KEY`
+- Optional: `HF_API_KEY` if you extend the project to use Hugging Face services directly
+
+## Environment Variables
+
+Create a `.env` file inside `Backend/`:
+
+```env
+GROQ_API_KEY=your_groq_api_key
+HF_API_KEY=your_huggingface_key
+```
+
+Do not commit your `.env` file.
+
+## Local Setup
+
+### 1. Create and activate a virtual environment
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+### 2. Install dependencies
+
+```bash
+cd Backend
+pip install -r requirement.txt
+```
+
+### 3. Run the backend
+
+```bash
+uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+### 4. Open the API
+
+- Health check: `http://127.0.0.1:8000/health`
+- Base route: `http://127.0.0.1:8000/`
+
+## API Endpoints
+
+### `GET /`
+
+Returns a basic service message.
+
+Example response:
+
+```json
+{"message":"This is a YouTube RAG Chatboat API"}
+```
+
+### `GET /health`
+
+Health status endpoint.
+
+Example response:
+
+```json
+{
+	"status": "ok",
+	"version": "1.0.0"
+}
+```
+
+### `POST /load_video`
+
+Loads transcript content into memory for later question answering.
+
+Request body:
+
+```json
+{
+	"video_id": "dQw4w9WgXcQ",
+	"language": "en"
+}
+```
+
+Response on success:
+
+```json
+{
+	"success": true,
+	"message": "Video loaded successfully!"
+}
+```
+
+### `POST /ask`
+
+Answers a question using the currently loaded transcript.
+
+Request body:
+
+```json
+{
+	"question": "What is the main topic of the video?"
+}
+```
+
+Response example:
+
+```json
+{
+	"answer": "..."
+}
+```
+
+## Docker Run
+
+Build the image from the `Backend/` folder:
+
+```bash
+docker build -t youtube-rag-chatbot .
+```
+
+Run the container:
+
+```bash
+docker run --name youtube-rag-chatbot -p 8000:8000 -e GROQ_API_KEY="your_key" youtube-rag-chatbot
+```
+
+Open:
+
+```bash
+http://127.0.0.1:8000/
+```
+
+## Hugging Face Spaces Deployment
+
+This project is suitable for a backend-only Hugging Face Space if you use a Docker Space.
+
+Recommended steps:
+
+1. Push the contents of `Backend/` as the Space source.
+2. Make sure `Dockerfile` starts `uvicorn main:app --host 0.0.0.0 --port 8000`.
+3. Add secrets in the Space settings for `GROQ_API_KEY` and any other required keys.
+4. Use the deployed Space URL to call the API endpoints.
+
+## Notes for Developers
+
+- `main.py` holds the FastAPI routes and keeps the loaded chain in memory.
+- `rag.py` contains transcript extraction, chunking, embedding, retrieval, and chain construction.
+- The current design is session-based: if the app restarts, the loaded transcript state is lost.
+- If you want persistent multi-user state, move storage to Redis, a database, or per-session caches.
+
+## Troubleshooting
+
+- If `/ask` says to load a video first, call `/load_video` before asking questions.
+- If transcript loading fails, verify the video has captions and the `language` code exists.
+- If the app cannot reach Groq, verify `GROQ_API_KEY` is set correctly.
+- If Docker works but the browser does not, use `http://127.0.0.1:8000` or `http://localhost:8000`, not `0.0.0.0`.
+
+## License
+
+No license has been specified yet.

@@ -5,6 +5,7 @@ __pycache__/
 # Environment files
 .env
 project/.env
+Backend/.env
 
 # Notebook checkpoints
 .ipynb_checkpoints/
